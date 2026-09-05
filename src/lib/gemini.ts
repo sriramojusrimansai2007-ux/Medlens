@@ -4,6 +4,8 @@ import { evaluateReferenceStatus } from "./rangeEngine";
 import { auditMedicalSummary } from "./safetyFilter";
 import { SAMPLE_REPORTS } from "./mockData";
 
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+
 // Helper to dynamically obtain Gemini client per request
 function getGeminiClient(): { ai: GoogleGenAI | null; apiKey: string } {
   const key = process.env.GEMINI_API_KEY || "";
@@ -68,7 +70,7 @@ CRITICAL INSTRUCTIONS:
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: GEMINI_MODEL,
       contents,
       config: {
         responseMimeType: "application/json",
@@ -294,7 +296,7 @@ Provide an informative, reassuring, and completely safe summary following all ru
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: GEMINI_MODEL,
       contents: [
         { text: systemInstructions },
         { text: userPrompt },
