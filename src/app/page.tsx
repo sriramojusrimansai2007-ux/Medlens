@@ -80,11 +80,17 @@ export default function MedLensDashboard() {
       }
 
       const data = await res.json();
-      setLabResults(data.results || []);
+      const extracted = data.results || [];
+      setLabResults(extracted);
 
       // If sample report, pre-populate source text for side-by-side view
       if (payload.text) {
         setSourceReportText(payload.text);
+      }
+
+      // Automatically synthesize clinical patient summary upon successful extraction
+      if (extracted.length > 0) {
+        generateSummaryInternal(patient, extracted);
       }
     } catch (err: any) {
       console.error("[Dashboard] Extraction error:", err);
@@ -94,9 +100,9 @@ export default function MedLensDashboard() {
     }
   };
 
-  // Handle Generating Safe Patient Summary
-  const handleGenerateSummary = async () => {
-    if (labResults.length === 0) return;
+  // Helper to generate clinical summary
+  const generateSummaryInternal = async (currentPatient: PatientIntake, results: LabResult[]) => {
+    if (results.length === 0) return;
     setIsSummarizing(true);
 
     try {
@@ -104,8 +110,8 @@ export default function MedLensDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient,
-          labResults,
+          patient: currentPatient,
+          labResults: results,
         }),
       });
 
@@ -118,17 +124,24 @@ export default function MedLensDashboard() {
       setSummary(data.summary);
     } catch (err: any) {
       console.error("[Dashboard] Summary error:", err);
-      alert(`Error generating clinical summary: ${err.message}`);
     } finally {
       setIsSummarizing(false);
     }
   };
 
+  // Handle Manual Generating / Refreshing Safe Patient Summary
+  const handleGenerateSummary = async () => {
+    await generateSummaryInternal(patient, labResults);
+  };
+
   // Handle Saving an Edited Lab Result (Human Verification)
   const handleSaveVerifiedItem = (updatedItem: LabResult) => {
-    setLabResults((prev) =>
-      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
-    );
+    setLabResults((prev) => {
+      const updated = prev.map((item) => (item.id === updatedItem.id ? updatedItem : item));
+      // Re-generate summary with updated verified data
+      generateSummaryInternal(patient, updated);
+      return updated;
+    });
   };
 
   // Print/Export Clinical Brief
@@ -161,51 +174,6 @@ export default function MedLensDashboard() {
 
       {/* Main Clinical Workspace */}
       <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Evaluator Quick-Start & Journey Banner */}
-        <section
-          aria-label="Evaluator Quick Tour"
-          className="p-5 rounded-2xl bg-gradient-to-r from-sky-900 to-indigo-900 text-white shadow-md no-print"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-300" aria-hidden="true" />
-                <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
-                  Hackathon Evaluator Showcase
-                </span>
-              </div>
-              <h1 className="text-xl font-bold tracking-tight">
-                MedLens — High-Integrity Clinical Information Intelligence
-              </h1>
-              <p className="text-xs text-sky-200 max-w-2xl leading-relaxed">
-                Seamlessly combines patient intake with multimodal report processing. Employs a deterministic reference-range engine to guarantee <strong>zero external range hallucinations</strong>, strict 5-tier provenance tracking, and human-in-the-loop verification.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  const cbc = SAMPLE_REPORTS[0];
-                  handleExtract({ text: cbc.rawReportText, fileName: cbc.sourceDocumentName });
-                }}
-                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 font-semibold transition"
-              >
-                1. Test CBC (With Ranges)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const noRange = SAMPLE_REPORTS[2];
-                  handleExtract({ text: noRange.rawReportText, fileName: noRange.sourceDocumentName });
-                }}
-                className="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition shadow-xs"
-              >
-                2. Test NO RANGES (Anti-Hallucination)
-              </button>
-            </div>
-          </div>
-        </section>
 
         {/* Step 1: Patient Information Intake */}
         <section aria-labelledby="section-intake">

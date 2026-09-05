@@ -129,31 +129,34 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({
               </div>
             </div>
 
-            {/* Summary Text */}
-            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 text-slate-800 text-xs md:text-sm leading-relaxed whitespace-pre-line">
-              {summary.text}
+            {/* Summary Text (Rich Typography & Markdown Rendering) */}
+            <div className="bg-slate-50/70 p-6 rounded-2xl border border-slate-200">
+              {renderFormattedSummary(summary.text)}
             </div>
 
             {/* Questions to Ask Doctor */}
             {summary.followUpQuestionsForDoctor && summary.followUpQuestionsForDoctor.length > 0 && (
-              <div className="p-4 rounded-xl bg-sky-50 border border-sky-200 space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-sky-900 flex items-center gap-1.5">
+              <div className="p-5 rounded-2xl bg-sky-50/80 border border-sky-200 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-sky-950 flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-sky-700" aria-hidden="true" />
-                  Empowered Healthcare Questions (To Discuss with Your Physician)
+                  Recommended Discussion Points (For Your Next Physician Visit)
                 </h3>
-                <ul className="list-disc list-inside text-xs text-sky-900 space-y-1 pl-1">
+                <ul className="space-y-2 text-xs text-sky-950 pl-1">
                   {summary.followUpQuestionsForDoctor.map((q, idx) => (
-                    <li key={idx} className="leading-snug">{q}</li>
+                    <li key={idx} className="flex items-start gap-2 bg-white/80 p-2.5 rounded-xl border border-sky-100 shadow-2xs">
+                      <span className="font-bold text-sky-600 shrink-0">{idx + 1}.</span>
+                      <span className="leading-snug">{q}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
 
             {/* Mandatory Medical Disclaimer Box */}
-            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
+            <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start gap-3 text-xs text-amber-950">
               <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-              <div>
-                <strong>Physician Evaluation Required:</strong> MedLens is an organization tool. It does not replace professional clinical evaluation, diagnostic confirmation, or medical intervention by a licensed practitioner.
+              <div className="leading-relaxed">
+                <strong>Physician Interpretation Required:</strong> MedLens organizes and explains clinical observations for patient understanding. It does not replace clinical diagnosis, treatment recommendations, or personalized medical care from your licensed doctor.
               </div>
             </div>
           </div>
@@ -162,4 +165,84 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({
     </div>
   );
 };
+
+function renderFormattedSummary(rawText: string) {
+  // Strip trailing duplicate raw DISCLAIMER if already shown in dedicated box
+  const cleanText = rawText.replace(/DISCLAIMER:[\s\S]*?(?:licensed healthcare physician\.?|$)/i, "").trim();
+  const paragraphs = cleanText.split(/\n\n+/);
+
+  return (
+    <div className="space-y-4 text-slate-800 text-xs md:text-sm leading-relaxed">
+      {paragraphs.map((para, pIdx) => {
+        const trimmed = para.trim();
+        if (!trimmed) return null;
+
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4 key={pIdx} className="text-sm font-bold text-slate-900 pt-2 border-b border-slate-200 pb-1.5 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+              {trimmed.replace(/^###\s*/, "")}
+            </h4>
+          );
+        }
+
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h3 key={pIdx} className="text-base font-bold text-slate-900 pt-3 border-b border-slate-200 pb-1.5 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+              {trimmed.replace(/^##\s*/, "")}
+            </h3>
+          );
+        }
+
+        const lines = trimmed.split("\n");
+        const isList = lines.every((line) => /^[-*•]\s+|^\d+\.\s+/.test(line.trim()));
+
+        if (isList && lines.length > 1) {
+          return (
+            <ul key={pIdx} className="space-y-1.5 pl-2">
+              {lines.map((line, lIdx) => {
+                const cleanedLine = line.replace(/^[-*•]\s+|^\d+\.\s+/, "").trim();
+                return (
+                  <li key={lIdx} className="flex items-start gap-2">
+                    <span className="text-indigo-500 mt-0.5 font-bold">&bull;</span>
+                    <span>{formatInlineMarkdown(cleanedLine)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        }
+
+        return (
+          <p key={pIdx} className="leading-relaxed">
+            {formatInlineMarkdown(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatInlineMarkdown(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={idx} className="font-bold text-slate-900">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return (
+        <em key={idx} className="italic text-slate-700">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return part;
+  });
+}
+
 
