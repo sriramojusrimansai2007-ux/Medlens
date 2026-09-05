@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { PatientIntake, LabResult, PatientSummary } from "@/lib/types";
-import { SYNTHETIC_PATIENTS, SAMPLE_REPORTS } from "@/lib/mockData";
+import { SYNTHETIC_PATIENTS, SAMPLE_REPORTS, BLANK_PATIENT } from "@/lib/mockData";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { Header } from "@/components/Header";
 import { PatientIntakeForm } from "@/components/PatientIntakeForm";
@@ -15,8 +15,8 @@ import { SideBySideViewer } from "@/components/SideBySideViewer";
 import { Shield, Sparkles, CheckCircle2, FileSpreadsheet } from "lucide-react";
 
 export default function MedLensDashboard() {
-  // 1. Patient Intake State (Default to Sarah Connor for immediate demo readiness)
-  const [patient, setPatient] = useState<PatientIntake>(SYNTHETIC_PATIENTS[0]);
+  // 1. Patient Intake State (Blank clean initial state)
+  const [patient, setPatient] = useState<PatientIntake>(BLANK_PATIENT);
 
   // 2. Structured Lab Results State
   const [labResults, setLabResults] = useState<LabResult[]>([]);
@@ -152,7 +152,7 @@ export default function MedLensDashboard() {
   // Reset Dashboard
   const handleReset = () => {
     if (confirm("Reset dashboard to clean state?")) {
-      setPatient(SYNTHETIC_PATIENTS[0]);
+      setPatient(BLANK_PATIENT);
       setLabResults([]);
       setSummary(undefined);
       setSourceReportText("");

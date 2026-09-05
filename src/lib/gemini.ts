@@ -246,8 +246,11 @@ function buildDeterministicSafeSummary(
   const hasAbnormal = labResults.some((r) => r.referenceStatus === "LOW" || r.referenceStatus === "HIGH");
   const noRangeCount = labResults.filter((r) => r.referenceStatus === "NOT_PROVIDED").length;
 
-  let summaryText = `Hello, here is a clear summary of your recorded health information and recent lab tests.\n\n`;
-  summaryText += `Your profile notes symptoms of ${patient.symptoms.join(", ") || "general wellness review"} and current medications including ${patient.medications.map((m) => m.name).join(", ") || "none"}.\n\n`;
+  const greeting = patient.fullName ? `Hello ${patient.fullName}, here` : "Hello, here";
+  let summaryText = `${greeting} is a clear summary of your recorded health information and recent lab tests.\n\n`;
+  const symptomsDesc = patient.symptoms && patient.symptoms.length > 0 ? `symptoms of ${patient.symptoms.join(", ")}` : "general clinical review";
+  const medsDesc = patient.medications && patient.medications.length > 0 ? `current medications including ${patient.medications.map((m) => m.name).join(", ")}` : "no active medications recorded";
+  summaryText += `Your profile notes ${symptomsDesc} and ${medsDesc}.\n\n`;
 
   if (hasAbnormal) {
     const flagged = labResults.filter((r) => r.referenceStatus === "LOW" || r.referenceStatus === "HIGH");
@@ -319,10 +322,11 @@ STRICT RESPONSIBLE AI & SAFETY RULES:
 6. Provide 2-3 thoughtful questions the patient can ask their doctor during their next visit.`;
 
   const userPrompt = `PATIENT CONTEXT:
-Age: ${patient.age} | Sex: ${patient.sex}
-Symptoms: ${patient.symptoms.join(", ") || "None reported"}
-Existing Conditions: ${patient.existingConditions.join(", ") || "None reported"}
-Current Medications: ${patient.medications.map((m) => `${m.name} (${m.dosage || "dosage unspecified"})`).join(", ") || "None"}
+Patient Identifier: ${patient.fullName || "Unspecified"}
+Age: ${patient.age > 0 ? `${patient.age} years old` : "Unspecified"} | Biological Sex: ${patient.sex}
+Symptoms: ${patient.symptoms.length > 0 ? patient.symptoms.join(", ") : "None reported"}
+Existing Conditions: ${patient.existingConditions.length > 0 ? patient.existingConditions.join(", ") : "None reported"}
+Current Medications: ${patient.medications.length > 0 ? patient.medications.map((m) => `${m.name} (${m.dosage || "dosage unspecified"})`).join(", ") : "None reported"}
 
 LABORATORY FINDINGS:
 ${JSON.stringify(labDataDigest, null, 2)}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { PatientIntake, Medication } from "@/lib/types";
-import { SYNTHETIC_PATIENTS } from "@/lib/mockData";
+import { SYNTHETIC_PATIENTS, BLANK_PATIENT } from "@/lib/mockData";
 import { User, Plus, Trash2, Sparkles, CheckCircle2 } from "lucide-react";
 import {
   COMMON_SYMPTOMS,
@@ -162,11 +162,17 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
           </span>
           <select
             aria-label="Select synthetic patient preset"
-            onChange={(e) => handleSelectPreset(e.target.value)}
+            value={SYNTHETIC_PATIENTS.some((p) => p.id === patient.id) ? patient.id : ""}
+            onChange={(e) => {
+              if (e.target.value === "__CLEAR__") {
+                onChange({ ...BLANK_PATIENT, id: `pat-${Date.now().toString(36)}`, createdAt: new Date().toISOString() });
+              } else if (e.target.value) {
+                handleSelectPreset(e.target.value);
+              }
+            }}
             className="text-xs bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-2xs"
-            defaultValue=""
           >
-            <option value="" disabled>
+            <option value="">
               Select Demo Patient...
             </option>
             {SYNTHETIC_PATIENTS.map((p) => (
@@ -174,6 +180,9 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
                 {p.fullName} ({p.age}y/o, {p.sex})
               </option>
             ))}
+            {(patient.fullName || patient.age > 0 || patient.symptoms.length > 0) && (
+              <option value="__CLEAR__">-- Reset to Blank Form --</option>
+            )}
           </select>
         </div>
       </div>
@@ -188,7 +197,7 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
             <input
               id="patient-name"
               type="text"
-              required
+              placeholder="e.g. Jane Doe or Patient ID"
               value={patient.fullName}
               onChange={(e) => onChange({ ...patient, fullName: e.target.value })}
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -204,9 +213,12 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
               type="number"
               min={0}
               max={120}
-              required
-              value={patient.age || ""}
-              onChange={(e) => onChange({ ...patient, age: parseInt(e.target.value) || 0 })}
+              placeholder="e.g. 34"
+              value={patient.age === 0 ? "" : patient.age}
+              onChange={(e) => {
+                const val = e.target.value;
+                onChange({ ...patient, age: val === "" ? 0 : parseInt(val, 10) || 0 });
+              }}
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
             />
           </div>
@@ -217,14 +229,14 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
             </label>
             <select
               id="patient-sex"
-              value={patient.sex}
+              value={patient.sex || "Prefer not to say"}
               onChange={(e) => onChange({ ...patient, sex: e.target.value as any })}
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
             >
+              <option value="Prefer not to say">Prefer not to say</option>
               <option value="Female">Female</option>
               <option value="Male">Male</option>
               <option value="Other">Other</option>
-              <option value="Prefer not to say">Prefer not to say</option>
             </select>
           </div>
         </div>

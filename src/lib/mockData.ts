@@ -1,6 +1,20 @@
 import { PatientIntake, LabResult } from "./types";
 import { evaluateReferenceStatus } from "./rangeEngine";
 
+export const BLANK_PATIENT: PatientIntake = {
+  id: "pat-initial",
+  fullName: "",
+  age: 0,
+  sex: "Prefer not to say",
+  symptoms: [],
+  existingConditions: [],
+  allergies: [],
+  medications: [],
+  notes: "",
+  provenance: "PATIENT_PROVIDED",
+  createdAt: new Date().toISOString(),
+};
+
 export const SYNTHETIC_PATIENTS: PatientIntake[] = [
   {
     id: "pat-sarah-34",
