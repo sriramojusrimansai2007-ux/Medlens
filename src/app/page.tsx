@@ -214,12 +214,17 @@ export default function MedLensDashboard() {
 
         {/* Step 2: Medical Report Ingestion */}
         <section aria-labelledby="section-upload">
-          <ReportUploader onExtract={handleExtract} isLoading={isExtracting} />
+          <ReportUploader
+            onExtract={handleExtract}
+            isLoading={isExtracting}
+            hasResults={labResults.length > 0}
+            resultCount={labResults.length}
+          />
         </section>
 
         {/* Step 3: Structured Medical Record Matrix */}
         {labResults.length > 0 && (
-          <section aria-labelledby="section-results" className="space-y-3">
+          <section id="section-results" aria-labelledby="section-results" className="space-y-3">
             {/* Optional Side-by-Side Source Split Viewer */}
             <SideBySideViewer
               sourceText={sourceReportText}

@@ -5,13 +5,22 @@ import { UploadCloud, FileText, Sparkles, Loader2, AlertCircle, CheckCircle2 } f
 interface ReportUploaderProps {
   onExtract: (payload: { file?: File; text?: string; fileName?: string }) => Promise<void>;
   isLoading: boolean;
+  hasResults?: boolean;
+  resultCount?: number;
 }
 
-export const ReportUploader: React.FC<ReportUploaderProps> = ({ onExtract, isLoading }) => {
+export const ReportUploader: React.FC<ReportUploaderProps> = ({
+  onExtract,
+  isLoading,
+  hasResults = false,
+  resultCount = 0,
+}) => {
   const [activeTab, setActiveTab] = useState<"upload" | "paste" | "presets">("upload");
   const [pastedText, setPastedText] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [selectedFileSize, setSelectedFileSize] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,7 +42,7 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({ onExtract, isLoa
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      await validateAndProcessFile(file);
+      handleFileSelected(file);
     }
   };
 
@@ -41,11 +50,11 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({ onExtract, isLoa
     setErrorMessage(null);
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      await validateAndProcessFile(file);
+      handleFileSelected(file);
     }
   };
 
-  const validateAndProcessFile = async (file: File) => {
+  const handleFileSelected = (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       setErrorMessage("File exceeds 5MB maximum allowable size.");
       return;
@@ -57,8 +66,18 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({ onExtract, isLoa
       return;
     }
 
+    setSelectedFile(file);
     setSelectedFileName(file.name);
-    await onExtract({ file, fileName: file.name });
+    setSelectedFileSize((file.size / (1024 * 1024)).toFixed(2) + " MB");
+  };
+
+  const handleExtractFile = async () => {
+    if (!selectedFile) {
+      setErrorMessage("Please select a medical report file first.");
+      return;
+    }
+    setErrorMessage(null);
+    await onExtract({ file: selectedFile, fileName: selectedFile.name });
   };
 
   const handlePasteSubmit = async (e: React.FormEvent) => {
@@ -190,12 +209,70 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({ onExtract, isLoa
               </div>
 
               {selectedFileName && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-700">
-                  <FileText className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" />
-                  <span>Selected: {selectedFileName}</span>
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-700 shadow-2xs">
+                    <FileText className="w-4 h-4 text-sky-600" aria-hidden="true" />
+                    <span>{selectedFileName}</span>
+                    {selectedFileSize && (
+                      <span className="text-[10px] text-slate-400 font-normal">({selectedFileSize})</span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleExtractFile}
+                    disabled={isLoading}
+                    className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                        <span>Extracting Structured Record...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-amber-300" aria-hidden="true" />
+                        <span>Extract & Get Medical Record</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Success Banner with Instant "View Extracted Records ↓" Button */}
+        {hasResults && !isLoading && (
+          <div className="mt-5 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+                <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-emerald-950">
+                  Medical Report Extracted Successfully
+                </h4>
+                <p className="text-[11px] text-emerald-700">
+                  {resultCount > 0
+                    ? `${resultCount} laboratory test metrics organized with source reference ranges`
+                    : "Clinical record parsed and ready for review"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("section-results");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer hover:shadow"
+            >
+              <span>View Extracted Records ↓</span>
+            </button>
           </div>
         )}
 
