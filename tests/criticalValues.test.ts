@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "vitest";
 import { evaluateCriticalFinding, getCriticalFindings } from "@/lib/criticalValues";
 import { LabResult } from "@/lib/types";
 
@@ -104,5 +104,17 @@ describe("Clinical Critical Panic Values Engine", () => {
     const criticals = getCriticalFindings(results);
     expect(criticals.length).toBe(2);
     expect(criticals.map((c) => c.testName)).toEqual(["Potassium", "Hemoglobin"]);
+  });
+
+  it("identifies critical hyponatremia (< 120 mmol/L)", () => {
+    const finding = evaluateCriticalFinding("Sodium", 115, "mmol/L");
+    expect(finding).not.toBeNull();
+    expect(finding?.level).toBe("CRITICAL_LOW");
+  });
+
+  it("identifies critical hypercalcemia (> 13.0 mg/dL)", () => {
+    const finding = evaluateCriticalFinding("Serum Calcium", 13.5, "mg/dL");
+    expect(finding).not.toBeNull();
+    expect(finding?.level).toBe("CRITICAL_HIGH");
   });
 });
