@@ -6,6 +6,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-Clinical%20Theme-sky.svg)](https://tailwindcss.com/)
 [![Vitest](https://img.shields.io/badge/Tests-100%25%20Passing-emerald.svg)](https://vitest.dev/)
 [![Accessibility](https://img.shields.io/badge/WCAG-2.1%20AA%20Compliant-green.svg)](https://www.w3.org/WAI/standards-guidelines/wcag/)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsriramojusrimansai2007-ux%2FMedlens&env=GEMINI_API_KEY,GEMINI_MODEL&project-name=medlens&repository-name=medlens)
 
 > **Solo Hackathon Entry** | Clinical Information Organization & Multi-Tier Provenance Intelligence
 
@@ -141,13 +142,18 @@ npm test
 
 ## 🌐 Production Deployment Guide
 
-### Option 1: Vercel (Fastest — 60 Seconds)
-1. Go to [vercel.com](https://vercel.com) and log in with GitHub.
-2. Click **Add New Project** $\to$ **Import** repository `sriramojusrimansai2007-ux/Medlens`.
-3. In **Environment Variables**, add:
-   - Key: `GEMINI_API_KEY`
-   - Value: `your_gemini_api_key_here`
-4. Click **Deploy**. Vercel will build and assign your live production URL (with free SSL and edge CDN).
+### Option 1: Vercel (Fastest — 60 Seconds, 0-Config)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsriramojusrimansai2007-ux%2FMedlens&env=GEMINI_API_KEY,GEMINI_MODEL&project-name=medlens&repository-name=medlens)
+
+1. Click the **Deploy with Vercel** button above, or go to [vercel.com/new](https://vercel.com/new).
+2. Log in with GitHub and select repository: `sriramojusrimansai2007-ux/Medlens`.
+3. Vercel automatically detects Next.js 15 App Router.
+4. Under **Environment Variables**, configure:
+   - **`GEMINI_API_KEY`**: `[Paste your Gemini API Key]`
+   - **`GEMINI_MODEL`**: `gemini-3.6-flash`
+5. Click **Deploy**. Vercel builds the project and provides an instant live HTTPS domain (e.g. `https://medlens-iota.vercel.app`).
+   - Every future git push to `main` automatically triggers zero-downtime redeployment.
 
 ### Option 2: Google Cloud Run / Docker
 1. Build container image:
