@@ -4,7 +4,14 @@ import { evaluateReferenceStatus } from "./rangeEngine";
 import { auditMedicalSummary } from "./safetyFilter";
 import { SAMPLE_REPORTS } from "./mockData";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+const CANDIDATE_MODELS = [
+  PRIMARY_MODEL,
+  "gemini-3.5-flash",
+  "gemini-3.8-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
+];
 
 // Helper to dynamically obtain Gemini client per request
 function getGeminiClient(): { ai: GoogleGenAI | null; apiKey: string } {
@@ -69,40 +76,62 @@ CRITICAL INSTRUCTIONS:
       throw new Error("No report content provided.");
     }
 
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            reportDate: { type: "string" },
-            labName: { type: "string" },
-            results: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  panelCategory: { type: "string" },
-                  testName: { type: "string" },
-                  value: { type: "string" },
-                  unit: { type: "string" },
-                  referenceRange: { type: ["string", "null"] },
-                  date: { type: "string" },
-                  observation: { type: "string" },
-                  confidence: { type: "number" },
+    // Try candidate models with automatic failover (handles 429 quota or 503 issues)
+    const uniqueModels = Array.from(new Set(CANDIDATE_MODELS));
+    let responseText = "";
+    let extractionError: any = null;
+
+    for (const model of uniqueModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                reportDate: { type: "string" },
+                labName: { type: "string" },
+                results: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      panelCategory: { type: "string" },
+                      testName: { type: "string" },
+                      value: { type: "string" },
+                      unit: { type: "string" },
+                      referenceRange: { type: ["string", "null"] },
+                      date: { type: "string" },
+                      observation: { type: "string" },
+                      confidence: { type: "number" },
+                    },
+                    required: ["testName", "value", "unit"],
+                  },
                 },
-                required: ["testName", "value", "unit"],
               },
+              required: ["results"],
             },
           },
-          required: ["results"],
-        },
-      },
-    });
+        });
 
-    const responseText = response.text || "{}";
+        const text = response.text || "";
+        if (text.trim().length > 0 && text !== "{}") {
+          responseText = text;
+          console.log(`[GeminiService] Successfully extracted document using model: ${model}`);
+          break;
+        }
+      } catch (modelErr: any) {
+        extractionError = modelErr;
+        console.warn(`[GeminiService] Model ${model} failed (${modelErr.status || modelErr.message}), trying next candidate...`);
+      }
+    }
+
+    if (!responseText) {
+      throw extractionError || new Error("Failed to extract data across all available Gemini models.");
+    }
+
     const rawParsed = JSON.parse(responseText);
     const validated = RawExtractionResponseSchema.parse(rawParsed);
 
@@ -301,15 +330,32 @@ ${JSON.stringify(labDataDigest, null, 2)}
 Provide an informative, reassuring, and completely safe summary following all rules.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [
-        { text: systemInstructions },
-        { text: userPrompt },
-      ],
-    });
+    const uniqueModels = Array.from(new Set(CANDIDATE_MODELS));
+    let rawSummaryText = "";
 
-    const rawSummaryText = response.text || "";
+    for (const model of uniqueModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: [
+            { text: systemInstructions },
+            { text: userPrompt },
+          ],
+        });
+        const text = response.text || "";
+        if (text.trim().length > 0) {
+          rawSummaryText = text;
+          break;
+        }
+      } catch (modelErr: any) {
+        console.warn(`[GeminiService] Summarizer model ${model} failed, trying next candidate...`);
+      }
+    }
+
+    if (!rawSummaryText) {
+      return buildDeterministicSafeSummary(patient, labResults);
+    }
+
     const audit = auditMedicalSummary(rawSummaryText);
 
     return {
