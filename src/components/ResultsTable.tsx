@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { LabResult, RangeStatus } from "@/lib/types";
 import { ProvenanceBadge } from "./ProvenanceBadge";
+import { CriticalAlertBanner } from "./CriticalAlertBanner";
+import { evaluateCriticalFinding, getCriticalFindings } from "@/lib/criticalValues";
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -11,7 +13,8 @@ import {
   Filter, 
   ShieldCheck, 
   FileSpreadsheet,
-  Info
+  Info,
+  AlertOctagon
 } from "lucide-react";
 
 interface ResultsTableProps {
@@ -22,7 +25,9 @@ interface ResultsTableProps {
 
 export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem, onInspectItem }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "ABNORMAL" | "NOT_PROVIDED" | "VERIFIED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "CRITICAL" | "ABNORMAL" | "NOT_PROVIDED" | "VERIFIED">("ALL");
+
+  const criticalFindings = useMemo(() => getCriticalFindings(results), [results]);
 
   const filteredResults = useMemo(() => {
     return results.filter((item) => {
@@ -31,6 +36,9 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem,
 
       if (!matchesSearch) return false;
 
+      if (statusFilter === "CRITICAL") {
+        return evaluateCriticalFinding(item.testName, item.numericValue, item.unit) !== null;
+      }
       if (statusFilter === "ABNORMAL") {
         return item.referenceStatus === "LOW" || item.referenceStatus === "HIGH";
       }
@@ -93,6 +101,20 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem,
           >
             All ({results.length})
           </button>
+          {criticalFindings.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setStatusFilter("CRITICAL")}
+              className={`px-3 py-1.5 rounded-lg border transition flex items-center gap-1.5 font-bold ${
+                statusFilter === "CRITICAL"
+                  ? "bg-red-700 text-white border-red-700 shadow-xs"
+                  : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+              }`}
+            >
+              <AlertOctagon className="w-3.5 h-3.5 animate-pulse text-red-600" />
+              Critical Alerts ({criticalFindings.length})
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setStatusFilter("ABNORMAL")}
@@ -131,6 +153,13 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem,
           </button>
         </div>
       </div>
+
+      {/* Hospital Critical Value Alert Notice */}
+      {criticalFindings.length > 0 && (
+        <div className="p-4 bg-red-50/40 border-b border-red-100">
+          <CriticalAlertBanner findings={criticalFindings} />
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="p-4 border-b border-slate-100 bg-white">
@@ -193,64 +222,85 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem,
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {panelItems.map((item) => (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-slate-50/70 transition-colors ${
-                        item.isVerified ? "bg-emerald-50/20" : ""
-                      }`}
-                    >
-                      {/* Test Name */}
-                      <td className="py-3 px-6 font-semibold text-slate-900">
-                        <div className="flex items-center gap-2">
-                          <span>{item.testName}</span>
-                          {item.isVerified && (
-                            <span title="Human Verified" className="text-emerald-600">
-                              <ShieldCheck className="w-3.5 h-3.5 inline" aria-label="Verified by user" />
+                  {panelItems.map((item) => {
+                    const isCritical = evaluateCriticalFinding(item.testName, item.numericValue, item.unit);
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`transition-colors ${
+                          isCritical
+                            ? "bg-red-50/40 hover:bg-red-50/60"
+                            : item.isVerified
+                            ? "bg-emerald-50/20 hover:bg-emerald-50/30"
+                            : "hover:bg-slate-50/70"
+                        }`}
+                      >
+                        {/* Test Name */}
+                        <td className="py-3 px-6 font-semibold text-slate-900">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>{item.testName}</span>
+                            {isCritical && (
+                              <span
+                                title={isCritical.clinicalContext}
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-red-800 bg-red-100 border border-red-300 px-2 py-0.5 rounded-md shadow-2xs"
+                              >
+                                <AlertOctagon className="w-3 h-3 text-red-600" />
+                                CRITICAL OBS.
+                              </span>
+                            )}
+                            {item.isVerified && (
+                              <span title="Human Verified" className="text-emerald-600">
+                                <ShieldCheck className="w-3.5 h-3.5 inline" aria-label="Verified by user" />
+                              </span>
+                            )}
+                          </div>
+                          {item.observation && (
+                            <div className="text-[11px] text-slate-400 font-normal italic mt-0.5">
+                              {item.observation}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Value */}
+                        <td className={`py-3 px-4 font-mono font-bold text-sm ${isCritical ? "text-red-700" : "text-slate-800"}`}>
+                          {item.value}
+                          {item.originalExtractedValue && item.originalExtractedValue !== item.value && (
+                            <span
+                              className="block text-[10px] text-slate-400 font-normal line-through"
+                              title="Original OCR Extracted Value"
+                            >
+                              Orig: {item.originalExtractedValue}
                             </span>
                           )}
-                        </div>
-                        {item.observation && (
-                          <div className="text-[11px] text-slate-400 font-normal italic mt-0.5">
-                            {item.observation}
-                          </div>
-                        )}
-                      </td>
+                        </td>
 
-                      {/* Value */}
-                      <td className="py-3 px-4 font-mono font-bold text-slate-800 text-sm">
-                        {item.value}
-                        {item.originalExtractedValue && item.originalExtractedValue !== item.value && (
-                          <span
-                            className="block text-[10px] text-slate-400 font-normal line-through"
-                            title="Original OCR Extracted Value"
-                          >
-                            Orig: {item.originalExtractedValue}
-                          </span>
-                        )}
-                      </td>
+                        {/* Units */}
+                        <td className="py-3 px-4 text-slate-600 font-medium">
+                          {item.unit || "—"}
+                        </td>
 
-                      {/* Units */}
-                      <td className="py-3 px-4 text-slate-600 font-medium">
-                        {item.unit || "—"}
-                      </td>
+                        {/* Reference Range (Strict from source) */}
+                        <td className="py-3 px-4 font-mono">
+                          {item.referenceRange ? (
+                            <span className="text-slate-800 font-medium">{item.referenceRange}</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              <Info className="w-3 h-3 text-amber-600" aria-hidden="true" />
+                              Not provided
+                            </span>
+                          )}
+                        </td>
 
-                      {/* Reference Range (Strict from source) */}
-                      <td className="py-3 px-4 font-mono">
-                        {item.referenceRange ? (
-                          <span className="text-slate-800 font-medium">{item.referenceRange}</span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                            <Info className="w-3 h-3 text-amber-600" aria-hidden="true" />
-                            Not provided
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Range Status (Dual-channel text + icon + color) */}
-                      <td className="py-3 px-4">
-                        <StatusBadge status={item.referenceStatus} />
-                      </td>
+                        {/* Range Status (Dual-channel text + icon + color) */}
+                        <td className="py-3 px-4">
+                          <StatusBadge status={item.referenceStatus} />
+                          {isCritical && (
+                            <span className="block text-[10px] font-bold text-red-600 mt-0.5">
+                              Panic Bound: {isCritical.thresholdDescription}
+                            </span>
+                          )}
+                        </td>
 
                       {/* Provenance Badge */}
                       <td className="py-3 px-4">
@@ -275,8 +325,9 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem,
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  );
+                })}
+              </tbody>
               </table>
             </div>
           ))

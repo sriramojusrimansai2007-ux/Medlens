@@ -393,6 +393,113 @@ Observations: Testing completed on automated immunofluorescence platform. Refere
         isVerified: false,
       }
     ]
+  },
+  {
+    id: "report-critical-panic-demo",
+    title: "4. Emergency & STAT Panel — Hospital Panic Values (Clinical Alert Demo)",
+    category: "Critical Care",
+    hasReferenceRanges: true,
+    sourceDocumentName: "General_Hospital_Stat_Critical_Lab.txt",
+    rawReportText: `GENERAL HOSPITAL STAT PATHOLOGY LAB
+PATIENT: Synthetic Demo Patient | DATE: 2026-09-05 | PRIORITY: STAT
+SPECIMEN: Blood / Plasma Heparin
+
+TEST NAME                    VALUE     UNITS      REFERENCE INTERVAL
+---------------------------------------------------------------------
+Potassium                    6.4       mmol/L     3.5 - 5.0
+Glucose, Random              435       mg/dL      70 - 140
+Hemoglobin (HGB)             6.3       g/dL       12.0 - 16.0
+Platelet Count               16        x10^3/uL   150 - 450
+Sodium                       138       mmol/L     135 - 145
+Creatinine                   1.1       mg/dL      0.7 - 1.3
+
+Observations: Critical alert telephone notification dispatched to clinical floor per institutional panic value protocol.`,
+    expectedResults: [
+      {
+        panelCategory: "STAT Critical Care Panel",
+        testName: "Potassium",
+        value: "6.4",
+        numericValue: 6.4,
+        unit: "mmol/L",
+        referenceRange: "3.5 - 5.0",
+        referenceStatus: "HIGH",
+        sourceReportName: "General_Hospital_Stat_Critical_Lab.txt",
+        date: "2026-09-05",
+        confidence: 0.99,
+        provenance: "REPORT_EXTRACTED",
+        isVerified: false,
+      },
+      {
+        panelCategory: "STAT Critical Care Panel",
+        testName: "Glucose, Random",
+        value: "435",
+        numericValue: 435,
+        unit: "mg/dL",
+        referenceRange: "70 - 140",
+        referenceStatus: "HIGH",
+        sourceReportName: "General_Hospital_Stat_Critical_Lab.txt",
+        date: "2026-09-05",
+        confidence: 0.99,
+        provenance: "REPORT_EXTRACTED",
+        isVerified: false,
+      },
+      {
+        panelCategory: "STAT Critical Care Panel",
+        testName: "Hemoglobin (HGB)",
+        value: "6.3",
+        numericValue: 6.3,
+        unit: "g/dL",
+        referenceRange: "12.0 - 16.0",
+        referenceStatus: "LOW",
+        sourceReportName: "General_Hospital_Stat_Critical_Lab.txt",
+        date: "2026-09-05",
+        confidence: 0.99,
+        provenance: "REPORT_EXTRACTED",
+        isVerified: false,
+      },
+      {
+        panelCategory: "STAT Critical Care Panel",
+        testName: "Platelet Count",
+        value: "16",
+        numericValue: 16,
+        unit: "x10^3/uL",
+        referenceRange: "150 - 450",
+        referenceStatus: "LOW",
+        sourceReportName: "General_Hospital_Stat_Critical_Lab.txt",
+        date: "2026-09-05",
+        confidence: 0.99,
+        provenance: "REPORT_EXTRACTED",
+        isVerified: false,
+      },
+      {
+        panelCategory: "STAT Critical Care Panel",
+        testName: "Sodium",
+        value: "138",
+        numericValue: 138,
+        unit: "mmol/L",
+        referenceRange: "135 - 145",
+        referenceStatus: "NORMAL",
+        sourceReportName: "General_Hospital_Stat_Critical_Lab.txt",
+        date: "2026-09-05",
+        confidence: 0.99,
+        provenance: "REPORT_EXTRACTED",
+        isVerified: false,
+      },
+      {
+        panelCategory: "STAT Critical Care Panel",
+        testName: "Creatinine",
+        value: "1.1",
+        numericValue: 1.1,
+        unit: "mg/dL",
+        referenceRange: "0.7 - 1.3",
+        referenceStatus: "NORMAL",
+        sourceReportName: "General_Hospital_Stat_Critical_Lab.txt",
+        date: "2026-09-05",
+        confidence: 0.98,
+        provenance: "REPORT_EXTRACTED",
+        isVerified: false,
+      },
+    ],
   }
 ];
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { PatientSummary } from "@/lib/types";
 import { ProvenanceBadge } from "./ProvenanceBadge";
 import { 
@@ -8,7 +8,11 @@ import {
   MessageSquare, 
   AlertTriangle, 
   Loader2, 
-  RefreshCw 
+  RefreshCw,
+  Volume2,
+  Pause,
+  Play,
+  Square
 } from "lucide-react";
 
 interface PatientSummaryCardProps {
@@ -24,6 +28,83 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({
   isLoading,
   hasResults,
 }) => {
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isPausedAudio, setIsPausedAudio] = useState(false);
+
+  // Stop speech synthesis on component unmount or when summary changes
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [summary]);
+
+  const handleToggleSpeech = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("Voice readout is not supported by your current browser.");
+      return;
+    }
+
+    if (isPlayingAudio && !isPausedAudio) {
+      window.speechSynthesis.pause();
+      setIsPausedAudio(true);
+      return;
+    }
+
+    if (isPlayingAudio && isPausedAudio) {
+      window.speechSynthesis.resume();
+      setIsPausedAudio(false);
+      return;
+    }
+
+    if (!summary) return;
+
+    window.speechSynthesis.cancel();
+
+    // Sanitize text for clear spoken cadence (strip markdown asterisks, hashtags, bullets)
+    const textToSpeak = summary.text
+      .replace(/[#*`_~]/g, "")
+      .replace(/DISCLAIMER:[\s\S]*?(?:licensed healthcare physician\.?|$)/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 0.95; // Calm, clear pace for patient health literacy
+    utterance.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice = voices.find(
+      (v) => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("US"))
+    ) || voices.find((v) => v.lang.startsWith("en"));
+    if (englishVoice) utterance.voice = englishVoice;
+
+    utterance.onstart = () => {
+      setIsPlayingAudio(true);
+      setIsPausedAudio(false);
+    };
+
+    utterance.onend = () => {
+      setIsPlayingAudio(false);
+      setIsPausedAudio(false);
+    };
+
+    utterance.onerror = () => {
+      setIsPlayingAudio(false);
+      setIsPausedAudio(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleStopSpeech = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsPlayingAudio(false);
+      setIsPausedAudio(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
@@ -43,30 +124,76 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({
           </div>
         </div>
 
-        {/* Generate / Regenerate button */}
-        <button
-          type="button"
-          disabled={isLoading || !hasResults}
-          onClick={onGenerate}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-              <span>Generating Safe Summary...</span>
-            </>
-          ) : summary ? (
-            <>
-              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Update Summary</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Generate Patient Summary</span>
-            </>
+        {/* Action Controls: Audio Accessibility & Summary Regeneration */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {summary && (
+            <div className="flex items-center gap-1.5 bg-indigo-50/80 border border-indigo-200/80 rounded-xl px-2 py-1">
+              <button
+                type="button"
+                onClick={handleToggleSpeech}
+                aria-label={isPlayingAudio && !isPausedAudio ? "Pause voice narration" : "Listen to clinical summary audio"}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                  isPlayingAudio && !isPausedAudio
+                    ? "bg-amber-500 text-white shadow-xs"
+                    : "bg-white text-indigo-700 hover:bg-indigo-100/60 shadow-2xs"
+                }`}
+              >
+                {isPlayingAudio && !isPausedAudio ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5 text-white animate-pulse" />
+                    <span>Pause Voice</span>
+                  </>
+                ) : isPlayingAudio && isPausedAudio ? (
+                  <>
+                    <Play className="w-3.5 h-3.5 text-indigo-700" />
+                    <span>Resume Voice</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Listen to Summary</span>
+                  </>
+                )}
+              </button>
+              {isPlayingAudio && (
+                <button
+                  type="button"
+                  onClick={handleStopSpeech}
+                  aria-label="Stop audio narration"
+                  className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition"
+                  title="Stop Audio"
+                >
+                  <Square className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           )}
-        </button>
+
+          {/* Generate / Regenerate button */}
+          <button
+            type="button"
+            disabled={isLoading || !hasResults}
+            onClick={onGenerate}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                <span>Generating Safe Summary...</span>
+              </>
+            ) : summary ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Update Summary</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Generate Patient Summary</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="p-6">
@@ -128,6 +255,40 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Active Voice Narration Accessibility Indicator */}
+            {isPlayingAudio && (
+              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-xs text-indigo-950 shadow-2xs">
+                <div className="flex items-center gap-2 font-medium">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600"></span>
+                  </span>
+                  <span>
+                    {isPausedAudio
+                      ? "Voice narration paused."
+                      : "Playing voice explanation for accessibility (Text-to-Speech)..."}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleToggleSpeech}
+                    className="font-bold text-indigo-700 hover:text-indigo-900 underline"
+                  >
+                    {isPausedAudio ? "Resume" : "Pause"}
+                  </button>
+                  <span>&bull;</span>
+                  <button
+                    type="button"
+                    onClick={handleStopSpeech}
+                    className="font-bold text-slate-500 hover:text-red-700 underline"
+                  >
+                    Stop
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Summary Text (Rich Typography & Markdown Rendering) */}
             <div className="bg-slate-50/70 p-6 rounded-2xl border border-slate-200">
