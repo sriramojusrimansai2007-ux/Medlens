@@ -46,6 +46,15 @@ export default function MedLensDashboard() {
         const formData = new FormData();
         formData.append("file", payload.file);
         setSourceReportName(payload.file.name);
+
+        // Pre-populate source text for side-by-side view if uploading text file
+        if (payload.file.name.toLowerCase().endsWith(".txt") || payload.file.type === "text/plain") {
+          try {
+            const fileText = await payload.file.text();
+            setSourceReportText(fileText);
+          } catch {}
+        }
+
         res = await fetch("/api/extract", {
           method: "POST",
           body: formData,

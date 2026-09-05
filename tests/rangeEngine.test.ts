@@ -13,6 +13,8 @@ describe("Deterministic Reference-Range Engine", () => {
       expect(parseNumericValue("12.4 g/dL")).toBe(12.4);
       expect(parseNumericValue("1,250 uIU/mL")).toBe(1250);
       expect(parseNumericValue("  9.4   ")).toBe(9.4);
+      expect(parseNumericValue("< 0.05")).toBe(0.05);
+      expect(parseNumericValue("<0.01")).toBe(0.01);
     });
 
     it("returns null for non-numeric values", () => {

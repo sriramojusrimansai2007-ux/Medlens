@@ -141,8 +141,18 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem,
             placeholder="Search laboratory tests, panels, or observations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 text-xs rounded-lg border border-slate-200 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+            className="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 focus:ring-2 focus:ring-sky-500 focus:outline-none"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              aria-label="Clear search"
+              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+            >
+              &times;
+            </button>
+          )}
         </div>
       </div>
 
@@ -166,7 +176,7 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onEditItem,
                   {panelName}
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium">
-                  {panelItems.length} observation(s)
+                  {panelItems.length} observation{panelItems.length === 1 ? "" : "s"}
                 </span>
               </div>
 

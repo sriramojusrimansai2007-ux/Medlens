@@ -48,7 +48,9 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        if (file.type === "text/plain") {
+        const isPlainText = file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
+
+        if (isPlainText) {
           const textContent = buffer.toString("utf-8");
           const extraction = await extractMedicalReportAI({
             text: textContent,
@@ -57,9 +59,14 @@ export async function POST(req: NextRequest) {
           return NextResponse.json(extraction);
         } else {
           const base64 = buffer.toString("base64");
+          const resolvedMime = file.type || 
+            (file.name.toLowerCase().endsWith(".png") ? "image/png" : 
+             file.name.toLowerCase().endsWith(".jpg") || file.name.toLowerCase().endsWith(".jpeg") ? "image/jpeg" : 
+             "application/pdf");
+
           const extraction = await extractMedicalReportAI({
             fileBase64: base64,
-            mimeType: file.type || "application/pdf",
+            mimeType: resolvedMime,
             fileName: file.name,
           });
           return NextResponse.json(extraction);

@@ -4,9 +4,18 @@ import { evaluateReferenceStatus } from "./rangeEngine";
 import { auditMedicalSummary } from "./safetyFilter";
 import { SAMPLE_REPORTS } from "./mockData";
 
-// Initialize official Google Gen AI client if API key is present
-const apiKey = process.env.GEMINI_API_KEY || "";
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Helper to dynamically obtain Gemini client per request
+function getGeminiClient(): { ai: GoogleGenAI | null; apiKey: string } {
+  const key = process.env.GEMINI_API_KEY || "";
+  if (!key || key.trim() === "" || key === "your_gemini_api_key_here") {
+    return { ai: null, apiKey: "" };
+  }
+  try {
+    return { ai: new GoogleGenAI({ apiKey: key.trim() }), apiKey: key.trim() };
+  } catch {
+    return { ai: null, apiKey: "" };
+  }
+}
 
 /**
  * Extracts structured medical data from document text or base64 file data.
@@ -22,9 +31,11 @@ export async function extractMedicalReportAI(
     (s) => (input.text && input.text.includes(s.rawReportText.substring(0, 40))) || (input.fileName === s.sourceDocumentName)
   );
 
+  const { ai, apiKey } = getGeminiClient();
+
   // If no API key configured or test simulation requested, use deterministic high-precision fallback
   if (!ai || !apiKey) {
-    console.log("[GeminiService] No GEMINI_API_KEY detected. Using resilient clinical mock engine.");
+    console.log("[GeminiService] No active GEMINI_API_KEY detected. Using resilient clinical mock engine.");
     return executeResilientFallbackExtraction(input, matchingSample);
   }
 
@@ -234,6 +245,8 @@ LABORATORY FINDINGS:
 ${JSON.stringify(labDataDigest, null, 2)}
 
 Provide an informative, reassuring, and completely safe summary following all rules.`;
+
+  const { ai, apiKey } = getGeminiClient();
 
   if (!ai || !apiKey) {
     // Generate deterministic safe summary

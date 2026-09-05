@@ -14,8 +14,8 @@ export interface ParsedRange {
 export function parseNumericValue(valueStr: string | null | undefined): number | null {
   if (!valueStr || typeof valueStr !== "string") return null;
 
-  // Clean string: remove commas, whitespace, units
-  const trimmed = valueStr.trim().replace(/,/g, "");
+  // Clean string: remove commas, whitespace, units, and leading inequality signs (e.g. "< 0.05")
+  const trimmed = valueStr.trim().replace(/,/g, "").replace(/^[<>]=?\s*/, "");
 
   // Match leading number (supports negative and decimals)
   const match = trimmed.match(/^[-+]?[0-9]*\.?[0-9]+/);

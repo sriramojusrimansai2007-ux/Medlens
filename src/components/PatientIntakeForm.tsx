@@ -205,6 +205,7 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
               <button
                 type="button"
                 onClick={addSymptom}
+                aria-label="Add symptom"
                 className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
               >
                 Add
@@ -250,6 +251,7 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
               <button
                 type="button"
                 onClick={addCondition}
+                aria-label="Add condition"
                 className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
               >
                 Add
@@ -298,6 +300,7 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
               <button
                 type="button"
                 onClick={addAllergy}
+                aria-label="Add allergy"
                 className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
               >
                 Add
@@ -352,6 +355,7 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
               <button
                 type="button"
                 onClick={addMedication}
+                aria-label="Add medication"
                 className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
               >
                 Add
