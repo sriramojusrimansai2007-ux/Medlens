@@ -1,12 +1,13 @@
 # MedLens — AI-Powered Clinical Information Intelligence
 
-[![Next.js 15](https://img.shields.io/badge/Next.js-15.1.0-blue.svg)](https://nextjs.org/)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15.5.25-blue.svg)](https://nextjs.org/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gen%20AI-Gemini%202.0%20Flash-indigo.svg)](https://aistudio.google.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict%20Mode-blue.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-Clinical%20Theme-sky.svg)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-100%25%20Passing-emerald.svg)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-39%20Passing-emerald.svg)](https://vitest.dev/)
 [![Accessibility](https://img.shields.io/badge/WCAG-2.1%20AA%20Compliant-green.svg)](https://www.w3.org/WAI/standards-guidelines/wcag/)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsriramojusrimansai2007-ux%2FMedlens&env=GEMINI_API_KEY,GEMINI_MODEL&project-name=medlens&repository-name=medlens)
+[![Security](https://img.shields.io/badge/Security-Enterprise%20Headers-darkgreen.svg)](https://nextjs.org/)
+[![Live Deployment](https://img.shields.io/badge/Vercel-Live%20App-black.svg)](https://medlensai-sable.vercel.app)
 
 > **Solo Hackathon Entry** | Clinical Information Organization & Multi-Tier Provenance Intelligence
 
