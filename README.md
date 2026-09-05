@@ -4,8 +4,9 @@
 [![Google Gemini](https://img.shields.io/badge/Google%20Gen%20AI-Gemini%202.0%20Flash-indigo.svg)](https://aistudio.google.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict%20Mode-blue.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-Clinical%20Theme-sky.svg)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-39%20Passing-emerald.svg)](https://vitest.dev/)
-[![Accessibility](https://img.shields.io/badge/WCAG-2.1%20AA%20Compliant-green.svg)](https://www.w3.org/WAI/standards-guidelines/wcag/)
+[![Vitest](https://img.shields.io/badge/Tests-48%20Passing-emerald.svg)](https://vitest.dev/)
+[![Accessibility](https://img.shields.io/badge/WCAG%202.1%20AA-Verified-green.svg)](https://www.w3.org/WAI/standards-guidelines/wcag/)
+[![CI Pipeline](https://img.shields.io/badge/GitHub%20Actions-Passing-blue.svg)](https://github.com/sriramojusrimansai2007-ux/Medlens/actions)
 [![Security](https://img.shields.io/badge/Security-Enterprise%20Headers-darkgreen.svg)](https://nextjs.org/)
 [![Live Deployment](https://img.shields.io/badge/Vercel-Live%20App-black.svg)](https://medlensai-sable.vercel.app)
 

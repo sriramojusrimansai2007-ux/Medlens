@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "lint": "next lint",
     "test": "vitest run",
+    "test:a11y": "vitest run tests/accessibility.test.ts",
+    "test:security": "vitest run tests/security.test.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
