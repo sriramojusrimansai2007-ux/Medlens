@@ -210,6 +210,52 @@ function executeResilientFallbackExtraction(
   return { results, rawJson: { simulated: true }, isMockFallback: true };
 }
 
+function buildDeterministicSafeSummary(
+  patient: PatientIntake,
+  labResults: LabResult[]
+): PatientSummary {
+  const hasAbnormal = labResults.some((r) => r.referenceStatus === "LOW" || r.referenceStatus === "HIGH");
+  const noRangeCount = labResults.filter((r) => r.referenceStatus === "NOT_PROVIDED").length;
+
+  let summaryText = `Hello, here is a clear summary of your recorded health information and recent lab tests.\n\n`;
+  summaryText += `Your profile notes symptoms of ${patient.symptoms.join(", ") || "general wellness review"} and current medications including ${patient.medications.map((m) => m.name).join(", ") || "none"}.\n\n`;
+
+  if (hasAbnormal) {
+    const flagged = labResults.filter((r) => r.referenceStatus === "LOW" || r.referenceStatus === "HIGH");
+    summaryText += `In your recent laboratory report, ${flagged.length} test value(s) fall outside the standard reference intervals provided on your report sheet (${flagged.map((f) => `${f.testName}: ${f.value} ${f.unit} [${f.referenceStatus}]`).join(", ")}). `;
+    summaryText += `These variations are observations from the lab and should be reviewed together with your doctor to understand how they relate to how you feel.\n\n`;
+  } else {
+    summaryText += `All test values that included reference intervals on your report sheet fall within the specified target ranges.\n\n`;
+  }
+
+  if (noRangeCount > 0) {
+    summaryText += `Please note: ${noRangeCount} test(s) on your report did not have reference ranges provided by the testing laboratory. Because MedLens does not guess or assume standard ranges, these values are shown as "Not provided" and your clinician can explain their significance.\n\n`;
+  }
+
+  summaryText += `Remember that laboratory numbers are only one piece of your overall health picture. Only your doctor can interpret these results in the context of your personal health history.`;
+
+  const audit = auditMedicalSummary(summaryText);
+
+  return {
+    text: audit.sanitizedText,
+    readingLevel: "7th Grade (Plain Language)",
+    generatedAt: new Date().toISOString(),
+    safetyChecksPassed: audit.passed,
+    disclaimer: "Educational and informational tool only. Not for medical diagnosis or treatment.",
+    keyPoints: [
+      `Patient intake and ${labResults.length} laboratory test items compiled`,
+      hasAbnormal ? "Flagged values identified strictly based on source report ranges" : "All reported values with source ranges are within expected intervals",
+      noRangeCount > 0 ? `${noRangeCount} test(s) clearly noted without assumed reference ranges` : "All tests had source intervals",
+    ],
+    followUpQuestionsForDoctor: [
+      "What do these specific laboratory observations mean for my daily symptoms?",
+      "Are there any follow-up tests or lifestyle habits you would recommend?",
+      "Should we adjust the timing of any of my current daily supplements or medications?",
+    ],
+    provenance: "AI_GENERATED",
+  };
+}
+
 /**
  * Generates a patient-friendly clinical information summary.
  * Strictly adheres to Responsible AI non-diagnostic guardrails.
@@ -218,6 +264,12 @@ export async function generateSafePatientSummaryAI(
   patient: PatientIntake,
   labResults: LabResult[]
 ): Promise<PatientSummary> {
+  const { ai, apiKey } = getGeminiClient();
+
+  if (!ai || !apiKey) {
+    return buildDeterministicSafeSummary(patient, labResults);
+  }
+
   const labDataDigest = labResults.map((r) => ({
     test: r.testName,
     value: `${r.value} ${r.unit}`.trim(),
@@ -247,52 +299,6 @@ LABORATORY FINDINGS:
 ${JSON.stringify(labDataDigest, null, 2)}
 
 Provide an informative, reassuring, and completely safe summary following all rules.`;
-
-  const { ai, apiKey } = getGeminiClient();
-
-  if (!ai || !apiKey) {
-    // Generate deterministic safe summary
-    const hasAbnormal = labResults.some((r) => r.referenceStatus === "LOW" || r.referenceStatus === "HIGH");
-    const noRangeCount = labResults.filter((r) => r.referenceStatus === "NOT_PROVIDED").length;
-
-    let summaryText = `Hello, here is a clear summary of your recorded health information and recent lab tests.\n\n`;
-    summaryText += `Your profile notes symptoms of ${patient.symptoms.join(", ") || "general wellness review"} and current medications including ${patient.medications.map((m) => m.name).join(", ") || "none"}.\n\n`;
-
-    if (hasAbnormal) {
-      const flagged = labResults.filter((r) => r.referenceStatus === "LOW" || r.referenceStatus === "HIGH");
-      summaryText += `In your recent laboratory report, ${flagged.length} test value(s) fall outside the standard reference intervals provided on your report sheet (${flagged.map((f) => `${f.testName}: ${f.value} ${f.unit} [${f.referenceStatus}]`).join(", ")}). `;
-      summaryText += `These variations are observations from the lab and should be reviewed together with your doctor to understand how they relate to how you feel.\n\n`;
-    } else {
-      summaryText += `All test values that included reference intervals on your report sheet fall within the specified target ranges.\n\n`;
-    }
-
-    if (noRangeCount > 0) {
-      summaryText += `Please note: ${noRangeCount} test(s) on your report did not have reference ranges provided by the testing laboratory. Because MedLens does not guess or assume standard ranges, these values are shown as "Not provided" and your clinician can explain their significance.\n\n`;
-    }
-
-    summaryText += `Remember that laboratory numbers are only one piece of your overall health picture. Only your doctor can interpret these results in the context of your personal health history.`;
-
-    const audit = auditMedicalSummary(summaryText);
-
-    return {
-      text: audit.sanitizedText,
-      readingLevel: "7th Grade (Plain Language)",
-      generatedAt: new Date().toISOString(),
-      safetyChecksPassed: audit.passed,
-      disclaimer: "Educational and informational tool only. Not for medical diagnosis or treatment.",
-      keyPoints: [
-        `Patient intake and ${labResults.length} laboratory test items compiled`,
-        hasAbnormal ? "Flagged values identified strictly based on source report ranges" : "All reported values with source ranges are within expected intervals",
-        noRangeCount > 0 ? `${noRangeCount} test(s) clearly noted without assumed reference ranges` : "All tests had source intervals",
-      ],
-      followUpQuestionsForDoctor: [
-        "What do these specific laboratory observations mean for my daily symptoms?",
-        "Are there any follow-up tests or lifestyle habits you would recommend?",
-        "Should we adjust the timing of any of my current daily supplements or medications?",
-      ],
-      provenance: "AI_GENERATED",
-    };
-  }
 
   try {
     const response = await ai.models.generateContent({
@@ -326,6 +332,6 @@ Provide an informative, reassuring, and completely safe summary following all ru
     };
   } catch (err) {
     console.error("[GeminiService] Summarizer fallback triggered:", err);
-    return generateSafePatientSummaryAI(patient, labResults);
+    return buildDeterministicSafeSummary(patient, labResults);
   }
 }
