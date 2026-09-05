@@ -4,8 +4,8 @@ import { extractMedicalReportAI } from "@/lib/gemini";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-// Maximum allowable file size: 4.5MB (Vercel Serverless payload ceiling)
-const MAX_FILE_SIZE_BYTES = 4.5 * 1024 * 1024;
+// Maximum allowable file size: 25MB
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "image/png",
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         // File Size Security Check
         if (file.size > MAX_FILE_SIZE_BYTES) {
           return NextResponse.json(
-            { error: `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds 5MB limit.` },
+            { error: `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds 25MB limit.` },
             { status: 400 }
           );
         }

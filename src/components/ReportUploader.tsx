@@ -123,8 +123,8 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({
       }
     }
 
-    if (file.size > 4 * 1024 * 1024) {
-      setErrorMessage("File exceeds 4MB maximum allowable cloud size. Please upload a smaller file or use 'Paste Text'.");
+    if (file.size > 25 * 1024 * 1024) {
+      setErrorMessage("File exceeds 25MB maximum allowable size. Please select a document under 25MB.");
       return;
     }
 
@@ -266,7 +266,7 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({
                 </label>
                 <span className="text-sm text-slate-500"> or drag and drop here</span>
                 <p className="text-xs text-slate-400 mt-1">
-                  Supports clinical PDF, scanned images (PNG, JPEG), and TXT requisitions (Max 5MB)
+                  Supports clinical PDF, scanned images (PNG, JPEG), and TXT requisitions (Max 25MB)
                 </p>
               </div>
 
