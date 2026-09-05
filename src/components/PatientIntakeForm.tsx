@@ -2,6 +2,13 @@ import React, { useState } from "react";
 import { PatientIntake, Medication } from "@/lib/types";
 import { SYNTHETIC_PATIENTS } from "@/lib/mockData";
 import { User, Plus, Trash2, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  COMMON_SYMPTOMS,
+  POPULAR_SYMPTOM_QUICK_CHIPS,
+  COMMON_CONDITIONS,
+  COMMON_ALLERGIES,
+  getFilteredSuggestions,
+} from "@/lib/clinicalDictionary";
 
 interface PatientIntakeFormProps {
   patient: PatientIntake;
@@ -10,10 +17,67 @@ interface PatientIntakeFormProps {
 
 export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, onChange }) => {
   const [newSymptom, setNewSymptom] = useState("");
+  const [showSymptomSuggestions, setShowSymptomSuggestions] = useState(false);
+  const [activeSymptomIndex, setActiveSymptomIndex] = useState(-1);
+
   const [newCondition, setNewCondition] = useState("");
+  const [showConditionSuggestions, setShowConditionSuggestions] = useState(false);
+  const [activeConditionIndex, setActiveConditionIndex] = useState(-1);
+
   const [newAllergy, setNewAllergy] = useState("");
+  const [showAllergySuggestions, setShowAllergySuggestions] = useState(false);
+  const [activeAllergyIndex, setActiveAllergyIndex] = useState(-1);
+
   const [newMedName, setNewMedName] = useState("");
   const [newMedDose, setNewMedDose] = useState("");
+
+  const symptomSuggestions = getFilteredSuggestions(
+    newSymptom,
+    COMMON_SYMPTOMS,
+    patient.symptoms
+  );
+
+  const conditionSuggestions = getFilteredSuggestions(
+    newCondition,
+    COMMON_CONDITIONS,
+    patient.existingConditions
+  );
+
+  const allergySuggestions = getFilteredSuggestions(
+    newAllergy,
+    COMMON_ALLERGIES,
+    patient.allergies
+  );
+
+  const addDirectSymptom = (symptomName: string) => {
+    const trimmed = symptomName.trim();
+    if (trimmed && !patient.symptoms.includes(trimmed)) {
+      onChange({ ...patient, symptoms: [...patient.symptoms, trimmed] });
+    }
+    setNewSymptom("");
+    setShowSymptomSuggestions(false);
+    setActiveSymptomIndex(-1);
+  };
+
+  const addDirectCondition = (conditionName: string) => {
+    const trimmed = conditionName.trim();
+    if (trimmed && !patient.existingConditions.includes(trimmed)) {
+      onChange({ ...patient, existingConditions: [...patient.existingConditions, trimmed] });
+    }
+    setNewCondition("");
+    setShowConditionSuggestions(false);
+    setActiveConditionIndex(-1);
+  };
+
+  const addDirectAllergy = (allergyName: string) => {
+    const trimmed = allergyName.trim();
+    if (trimmed && !patient.allergies.includes(trimmed)) {
+      onChange({ ...patient, allergies: [...patient.allergies, trimmed] });
+    }
+    setNewAllergy("");
+    setShowAllergySuggestions(false);
+    setActiveAllergyIndex(-1);
+  };
 
   const handleSelectPreset = (presetId: string) => {
     const selected = SYNTHETIC_PATIENTS.find((p) => p.id === presetId);
@@ -193,23 +257,116 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
                 <span className="text-xs text-slate-400 italic">No symptoms entered</span>
               )}
             </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Add symptom (e.g. Fatigue)..."
-                value={newSymptom}
-                onChange={(e) => setNewSymptom(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addSymptom(e)}
-                className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={addSymptom}
-                aria-label="Add symptom"
-                className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
-              >
-                Add
-              </button>
+
+            <div className="relative">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    role="combobox"
+                    aria-expanded={showSymptomSuggestions && symptomSuggestions.length > 0}
+                    aria-autocomplete="list"
+                    aria-controls="symptom-suggestions-list"
+                    placeholder="Add symptom (e.g. Fatigue, Dizziness)..."
+                    value={newSymptom}
+                    onFocus={() => setShowSymptomSuggestions(true)}
+                    onChange={(e) => {
+                      setNewSymptom(e.target.value);
+                      setShowSymptomSuggestions(true);
+                      setActiveSymptomIndex(-1);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setActiveSymptomIndex((prev) =>
+                          prev < symptomSuggestions.length - 1 ? prev + 1 : 0
+                        );
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setActiveSymptomIndex((prev) =>
+                          prev > 0 ? prev - 1 : symptomSuggestions.length - 1
+                        );
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (
+                          activeSymptomIndex >= 0 &&
+                          activeSymptomIndex < symptomSuggestions.length
+                        ) {
+                          addDirectSymptom(symptomSuggestions[activeSymptomIndex]);
+                        } else {
+                          addSymptom(e);
+                        }
+                      } else if (e.key === "Escape") {
+                        setShowSymptomSuggestions(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowSymptomSuggestions(false), 200);
+                    }}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  />
+                  {showSymptomSuggestions && symptomSuggestions.length > 0 && (
+                    <ul
+                      id="symptom-suggestions-list"
+                      role="listbox"
+                      className="absolute z-20 left-0 right-0 top-full mt-1 bg-white rounded-lg border border-sky-200 shadow-lg py-1 max-h-48 overflow-y-auto text-xs"
+                    >
+                      <li className="px-2.5 py-1 text-[10px] uppercase font-bold text-slate-400 bg-slate-50 border-b border-slate-100 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-sky-600" />
+                        Suggested Clinical Symptoms
+                      </li>
+                      {symptomSuggestions.map((suggestion, idx) => (
+                        <li
+                          key={suggestion}
+                          role="option"
+                          aria-selected={idx === activeSymptomIndex}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            addDirectSymptom(suggestion);
+                          }}
+                          className={`px-3 py-1.5 cursor-pointer flex items-center justify-between transition-colors ${
+                            idx === activeSymptomIndex
+                              ? "bg-sky-100 text-sky-900 font-medium"
+                              : "hover:bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          <span>{suggestion}</span>
+                          <span className="text-[10px] text-sky-600 font-semibold">+ Add</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={addSymptom}
+                  aria-label="Add symptom"
+                  className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Quick suggestion chips */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-500" /> Quick Add:
+                </span>
+                {POPULAR_SYMPTOM_QUICK_CHIPS.filter((s) => !patient.symptoms.includes(s))
+                  .slice(0, 5)
+                  .map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => addDirectSymptom(chip)}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-sky-300 hover:bg-sky-50 text-[11px] text-slate-600 hover:text-sky-700 transition-colors"
+                      title={`Click to add ${chip}`}
+                    >
+                      <Plus className="w-2.5 h-2.5 text-sky-600" />
+                      {chip}
+                    </button>
+                  ))}
+              </div>
             </div>
           </div>
 
@@ -239,23 +396,116 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
                 <span className="text-xs text-slate-400 italic">None reported</span>
               )}
             </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Add condition (e.g. Hypertension)..."
-                value={newCondition}
-                onChange={(e) => setNewCondition(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addCondition(e)}
-                className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={addCondition}
-                aria-label="Add condition"
-                className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
-              >
-                Add
-              </button>
+
+            <div className="relative">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    role="combobox"
+                    aria-expanded={showConditionSuggestions && conditionSuggestions.length > 0}
+                    aria-autocomplete="list"
+                    aria-controls="condition-suggestions-list"
+                    placeholder="Add condition (e.g. Hypertension)..."
+                    value={newCondition}
+                    onFocus={() => setShowConditionSuggestions(true)}
+                    onChange={(e) => {
+                      setNewCondition(e.target.value);
+                      setShowConditionSuggestions(true);
+                      setActiveConditionIndex(-1);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setActiveConditionIndex((prev) =>
+                          prev < conditionSuggestions.length - 1 ? prev + 1 : 0
+                        );
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setActiveConditionIndex((prev) =>
+                          prev > 0 ? prev - 1 : conditionSuggestions.length - 1
+                        );
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (
+                          activeConditionIndex >= 0 &&
+                          activeConditionIndex < conditionSuggestions.length
+                        ) {
+                          addDirectCondition(conditionSuggestions[activeConditionIndex]);
+                        } else {
+                          addCondition(e);
+                        }
+                      } else if (e.key === "Escape") {
+                        setShowConditionSuggestions(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowConditionSuggestions(false), 200);
+                    }}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  />
+                  {showConditionSuggestions && conditionSuggestions.length > 0 && (
+                    <ul
+                      id="condition-suggestions-list"
+                      role="listbox"
+                      className="absolute z-20 left-0 right-0 top-full mt-1 bg-white rounded-lg border border-slate-300 shadow-lg py-1 max-h-48 overflow-y-auto text-xs"
+                    >
+                      <li className="px-2.5 py-1 text-[10px] uppercase font-bold text-slate-400 bg-slate-50 border-b border-slate-100 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-slate-600" />
+                        Suggested Conditions
+                      </li>
+                      {conditionSuggestions.map((suggestion, idx) => (
+                        <li
+                          key={suggestion}
+                          role="option"
+                          aria-selected={idx === activeConditionIndex}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            addDirectCondition(suggestion);
+                          }}
+                          className={`px-3 py-1.5 cursor-pointer flex items-center justify-between transition-colors ${
+                            idx === activeConditionIndex
+                              ? "bg-slate-200 text-slate-900 font-medium"
+                              : "hover:bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          <span>{suggestion}</span>
+                          <span className="text-[10px] text-slate-600 font-semibold">+ Add</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={addCondition}
+                  aria-label="Add condition"
+                  className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Quick condition chips */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-slate-500" /> Quick Add:
+                </span>
+                {COMMON_CONDITIONS.filter((c) => !patient.existingConditions.includes(c))
+                  .slice(0, 4)
+                  .map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => addDirectCondition(chip)}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-slate-400 hover:bg-slate-100 text-[11px] text-slate-600 transition-colors"
+                      title={`Click to add ${chip}`}
+                    >
+                      <Plus className="w-2.5 h-2.5 text-slate-600" />
+                      {chip}
+                    </button>
+                  ))}
+              </div>
             </div>
           </div>
         </div>
@@ -288,23 +538,116 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
                 <span className="text-xs text-slate-400 italic">No known drug allergies (NKDA)</span>
               )}
             </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Add allergy (e.g. Penicillin)..."
-                value={newAllergy}
-                onChange={(e) => setNewAllergy(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addAllergy(e)}
-                className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={addAllergy}
-                aria-label="Add allergy"
-                className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
-              >
-                Add
-              </button>
+
+            <div className="relative">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    role="combobox"
+                    aria-expanded={showAllergySuggestions && allergySuggestions.length > 0}
+                    aria-autocomplete="list"
+                    aria-controls="allergy-suggestions-list"
+                    placeholder="Add allergy (e.g. Penicillin)..."
+                    value={newAllergy}
+                    onFocus={() => setShowAllergySuggestions(true)}
+                    onChange={(e) => {
+                      setNewAllergy(e.target.value);
+                      setShowAllergySuggestions(true);
+                      setActiveAllergyIndex(-1);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setActiveAllergyIndex((prev) =>
+                          prev < allergySuggestions.length - 1 ? prev + 1 : 0
+                        );
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setActiveAllergyIndex((prev) =>
+                          prev > 0 ? prev - 1 : allergySuggestions.length - 1
+                        );
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (
+                          activeAllergyIndex >= 0 &&
+                          activeAllergyIndex < allergySuggestions.length
+                        ) {
+                          addDirectAllergy(allergySuggestions[activeAllergyIndex]);
+                        } else {
+                          addAllergy(e);
+                        }
+                      } else if (e.key === "Escape") {
+                        setShowAllergySuggestions(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowAllergySuggestions(false), 200);
+                    }}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  />
+                  {showAllergySuggestions && allergySuggestions.length > 0 && (
+                    <ul
+                      id="allergy-suggestions-list"
+                      role="listbox"
+                      className="absolute z-20 left-0 right-0 top-full mt-1 bg-white rounded-lg border border-rose-200 shadow-lg py-1 max-h-48 overflow-y-auto text-xs"
+                    >
+                      <li className="px-2.5 py-1 text-[10px] uppercase font-bold text-slate-400 bg-slate-50 border-b border-slate-100 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-rose-600" />
+                        Suggested Allergies
+                      </li>
+                      {allergySuggestions.map((suggestion, idx) => (
+                        <li
+                          key={suggestion}
+                          role="option"
+                          aria-selected={idx === activeAllergyIndex}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            addDirectAllergy(suggestion);
+                          }}
+                          className={`px-3 py-1.5 cursor-pointer flex items-center justify-between transition-colors ${
+                            idx === activeAllergyIndex
+                              ? "bg-rose-100 text-rose-900 font-medium"
+                              : "hover:bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          <span>{suggestion}</span>
+                          <span className="text-[10px] text-rose-600 font-semibold">+ Add</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={addAllergy}
+                  aria-label="Add allergy"
+                  className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Quick allergy chips */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-rose-500" /> Quick Add:
+                </span>
+                {COMMON_ALLERGIES.filter((a) => !patient.allergies.includes(a))
+                  .slice(0, 4)
+                  .map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => addDirectAllergy(chip)}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-[11px] text-slate-600 hover:text-rose-700 transition-colors"
+                      title={`Click to add ${chip}`}
+                    >
+                      <Plus className="w-2.5 h-2.5 text-rose-600" />
+                      {chip}
+                    </button>
+                  ))}
+              </div>
             </div>
           </div>
 
