@@ -692,7 +692,7 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
                 <span className="text-xs text-slate-400 italic">No active medications recorded</span>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 placeholder="Medication name..."
@@ -705,13 +705,13 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
                 placeholder="Dosage (e.g. 500mg)..."
                 value={newMedDose}
                 onChange={(e) => setNewMedDose(e.target.value)}
-                className="w-28 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                className="w-full sm:w-32 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={addMedication}
                 aria-label="Add medication"
-                className="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold"
+                className="px-3 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-xs font-semibold whitespace-nowrap"
               >
                 Add
               </button>

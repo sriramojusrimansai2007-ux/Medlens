@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ activePatientName, onPrint, onRe
                 Clinical Intelligence
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">Structured Patient Records & Multimodal Lab Intelligence</p>
+            <p className="text-xs text-slate-500 font-medium hidden md:block">Structured Patient Records & Multimodal Lab Intelligence</p>
           </div>
         </div>
 
@@ -44,11 +44,11 @@ export const Header: React.FC<HeaderProps> = ({ activePatientName, onPrint, onRe
         </div>
 
         {/* Active Patient & Export Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {activePatientName && (
             <div className="hidden sm:flex flex-col text-right">
               <span className="text-[10px] uppercase font-semibold text-slate-400">Current Record</span>
-              <span className="text-xs font-semibold text-slate-800">{activePatientName}</span>
+              <span className="text-xs font-semibold text-slate-800 max-w-[140px] truncate">{activePatientName}</span>
             </div>
           )}
 
@@ -57,10 +57,10 @@ export const Header: React.FC<HeaderProps> = ({ activePatientName, onPrint, onRe
               type="button"
               onClick={onPrint}
               aria-label="Export Clinical Brief to Print or PDF"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-2xs"
             >
               <Printer className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
-              <span>Export Brief</span>
+              <span className="hidden sm:inline">Export Brief</span>
             </button>
           )}
 

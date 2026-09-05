@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { PatientIntake, LabResult, PatientSummary } from "@/lib/types";
-import { SYNTHETIC_PATIENTS, SAMPLE_REPORTS, BLANK_PATIENT } from "@/lib/mockData";
+import { BLANK_PATIENT } from "@/lib/mockData";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { Header } from "@/components/Header";
 import { PatientIntakeForm } from "@/components/PatientIntakeForm";
@@ -12,7 +12,7 @@ import { PatientSummaryCard } from "@/components/PatientSummaryCard";
 import { VerificationModal } from "@/components/VerificationModal";
 import { ProvenanceDrawer } from "@/components/ProvenanceDrawer";
 import { SideBySideViewer } from "@/components/SideBySideViewer";
-import { Shield, Sparkles, CheckCircle2, FileSpreadsheet } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 
 export default function MedLensDashboard() {
   // 1. Patient Intake State (Blank clean initial state)
@@ -26,9 +26,10 @@ export default function MedLensDashboard() {
   // 3. AI Patient Summary State
   const [summary, setSummary] = useState<PatientSummary | undefined>(undefined);
 
-  // 4. Loading States
+  // 4. Loading & Error States
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
 
   // 5. Modal & Drawer States
   const [editingItem, setEditingItem] = useState<LabResult | null>(null);
@@ -38,6 +39,7 @@ export default function MedLensDashboard() {
   // Handle Medical Report Ingestion
   const handleExtract = async (payload: { file?: File; text?: string; fileName?: string }) => {
     setIsExtracting(true);
+    setExtractError(null);
     setSummary(undefined); // Clear old summary on new report
 
     try {
@@ -94,7 +96,7 @@ export default function MedLensDashboard() {
       }
     } catch (err: any) {
       console.error("[Dashboard] Extraction error:", err);
-      alert(`Error extracting document: ${err.message}`);
+      setExtractError(err.message || "Failed to extract medical document.");
     } finally {
       setIsExtracting(false);
     }
@@ -174,6 +176,28 @@ export default function MedLensDashboard() {
 
       {/* Main Clinical Workspace */}
       <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Document Ingestion Error Notification */}
+        {extractError && (
+          <div
+            role="alert"
+            className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between text-xs text-red-800 shadow-2xs animate-in fade-in duration-150"
+          >
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+              <span>
+                <strong>Document Ingestion Notice:</strong> {extractError}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setExtractError(null)}
+              aria-label="Dismiss error notice"
+              className="p-1 rounded-md text-red-500 hover:text-red-800 hover:bg-red-100 transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Step 1: Patient Information Intake */}
         <section aria-labelledby="section-intake">

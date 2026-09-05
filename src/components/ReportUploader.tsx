@@ -309,31 +309,37 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({
             <div className="text-xs text-slate-600 mb-2">
               Select one of the pre-configured clinical benchmark datasets to test reference-range awareness:
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {SAMPLE_REPORTS.map((preset) => (
                 <button
                   key={preset.id}
                   type="button"
                   disabled={isLoading}
                   onClick={() => handleSelectPreset(preset)}
-                  className={`p-4 rounded-xl border text-left transition-all hover:shadow-md flex flex-col justify-between ${
-                    !preset.hasReferenceRanges
-                      ? "border-amber-300 bg-amber-50/50 hover:border-amber-400"
-                      : "border-slate-200 bg-slate-50/70 hover:border-sky-400"
+                  className={`p-4 rounded-xl border text-left transition-all hover:shadow-md flex flex-col justify-between cursor-pointer ${
+                    preset.category === "Critical Care"
+                      ? "border-red-300 bg-red-50/50 hover:border-red-400 hover:bg-red-50/80"
+                      : !preset.hasReferenceRanges
+                      ? "border-amber-300 bg-amber-50/50 hover:border-amber-400 hover:bg-amber-50/80"
+                      : "border-slate-200 bg-slate-50/70 hover:border-sky-400 hover:bg-white"
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         {preset.category}
                       </span>
-                      {preset.hasReferenceRanges ? (
+                      {preset.category === "Critical Care" ? (
+                        <span className="text-[10px] font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full border border-red-300">
+                          Panic Alerts
+                        </span>
+                      ) : preset.hasReferenceRanges ? (
                         <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
                           Has Source Ranges
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full ring-1 ring-amber-400">
-                          NO Reference Ranges
+                          NO Ranges
                         </span>
                       )}
                     </div>
