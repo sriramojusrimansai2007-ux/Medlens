@@ -1,0 +1,16 @@
+LABCORP CLINICAL BIOCHEMISTRY SERVICES
+DATE: 2026-08-28 | SPECIMEN: Serum Gel Separator Tube
+ACCESSION: LC-9941-2026
+
+TEST NAME                    VALUE     UNITS      REFERENCE INTERVAL
+---------------------------------------------------------------------
+Glucose, Fasting             142       mg/dL      70 - 99
+Blood Urea Nitrogen (BUN)    16        mg/dL      7 - 20
+Creatinine                   0.9       mg/dL      0.6 - 1.2
+eGFR                         88        mL/min     > 60
+Sodium                       139       mmol/L     135 - 145
+Potassium                    4.2       mmol/L     3.5 - 5.1
+Total Bilirubin              0.6       mg/dL      0.2 - 1.2
+ALT (SGPT)                   28        U/L        < 45
+
+Observations: Fasting specimen verified. Elevated fasting blood sugar noted.

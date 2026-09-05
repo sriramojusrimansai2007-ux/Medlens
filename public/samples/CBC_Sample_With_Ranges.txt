@@ -1,0 +1,14 @@
+QUEST DIAGNOSTICS - CLINICAL LABORATORY REPORT
+PATIENT: Synthetic Demo Patient | DATE: 2026-09-01
+SPECIMEN: Whole Blood EDTA | ACCESSION: QD-8921-2026
+
+TEST NAME                    VALUE     UNITS      REFERENCE INTERVAL
+---------------------------------------------------------------------
+White Blood Cell (WBC)       6.8       x10^3/uL   4.5 - 11.0
+Red Blood Cell (RBC)         3.8       x10^6/uL   4.0 - 5.2
+Hemoglobin (HGB)             9.4       g/dL       12.0 - 15.5
+Hematocrit (HCT)             29.8      %          36.0 - 46.0
+Mean Corpuscular Vol (MCV)   72.0      fL         80.0 - 100.0
+Platelet Count               245       x10^3/uL   150 - 450
+
+Observations: Marked microcytosis and hypochromia observed on peripheral smear examination.

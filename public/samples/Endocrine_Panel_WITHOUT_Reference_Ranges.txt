@@ -1,0 +1,12 @@
+SPECIALTY ENDOCRINOLOGY LAB SERVICES
+PATIENT: Synthetic Demo Patient | DATE: 2026-09-03
+NOTICE: Custom research assay. Specific institutional reference intervals were NOT supplied on this requisition.
+
+TEST NAME                          VALUE     UNITS
+------------------------------------------------------
+Thyroid Stimulating Hormone (TSH)  5.8       uIU/mL
+Free Thyroxine (Free T4)           0.9       ng/dL
+25-Hydroxy Vitamin D               18        ng/mL
+Antinuclear Antibodies (ANA)       1:160     titer
+
+Observations: Testing completed on automated immunofluorescence platform. Reference intervals omitted per requisition protocol.
