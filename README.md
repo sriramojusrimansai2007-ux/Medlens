@@ -141,3 +141,4 @@ npm test
 
 ## 📄 License
 MIT License. Created for the AI Hackathon 2026.
+

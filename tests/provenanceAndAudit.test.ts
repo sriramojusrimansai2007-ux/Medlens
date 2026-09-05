@@ -85,3 +85,4 @@ describe("Provenance Tiers & Human Verification Audit Trail", () => {
     expect(verifiedItem.auditTrail![0].verifiedBy).toContain("Dr. Alex Taylor");
   });
 });
+

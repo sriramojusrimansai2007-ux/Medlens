@@ -74,3 +74,4 @@ describe("End-to-End Medical Report Extraction & AI Summarization", () => {
     expect(summary.text).not.toMatch(/\btake\s+\d+\s*mg\b/i);
   });
 });
+

@@ -289,3 +289,4 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({ onExtract, isLoa
     </div>
   );
 };
+

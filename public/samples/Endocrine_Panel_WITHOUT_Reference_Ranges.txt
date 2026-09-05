@@ -10,3 +10,4 @@ Free Thyroxine (Free T4)           0.9       ng/dL
 Antinuclear Antibodies (ANA)       1:160     titer
 
 Observations: Testing completed on automated immunofluorescence platform. Reference intervals omitted per requisition protocol.
+

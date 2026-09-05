@@ -112,3 +112,4 @@ export const RawExtractionResponseSchema = z.object({
   labName: z.string().optional(),
   results: z.array(RawExtractedLabItemSchema),
 });
+

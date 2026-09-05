@@ -12,3 +12,4 @@ Mean Corpuscular Vol (MCV)   72.0      fL         80.0 - 100.0
 Platelet Count               245       x10^3/uL   150 - 450
 
 Observations: Marked microcytosis and hypochromia observed on peripheral smear examination.
+

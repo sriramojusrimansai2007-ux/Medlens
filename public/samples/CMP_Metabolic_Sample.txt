@@ -14,3 +14,4 @@ Total Bilirubin              0.6       mg/dL      0.2 - 1.2
 ALT (SGPT)                   28        U/L        < 45
 
 Observations: Fasting specimen verified. Elevated fasting blood sugar noted.
+

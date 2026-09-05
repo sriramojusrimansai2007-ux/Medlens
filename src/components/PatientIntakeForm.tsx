@@ -374,3 +374,4 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({ patient, o
     </div>
   );
 };
+
