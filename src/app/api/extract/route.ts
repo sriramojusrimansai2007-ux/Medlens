@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractMedicalReportAI } from "@/lib/gemini";
 
-// Maximum allowable file size: 5MB
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
+// Maximum allowable file size: 4.5MB (Vercel Serverless payload ceiling)
+const MAX_FILE_SIZE_BYTES = 4.5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "image/png",

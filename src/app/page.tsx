@@ -77,11 +77,29 @@ export default function MedLensDashboard() {
       }
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to process report.");
+        let errorMsg = "Failed to process medical report.";
+        try {
+          const errData = await res.json();
+          errorMsg = errData.error || errorMsg;
+        } catch {
+          const rawText = await res.text().catch(() => "");
+          if (res.status === 413 || rawText.toLowerCase().includes("request entity too large") || rawText.toLowerCase().includes("request en")) {
+            errorMsg = "File size exceeds Vercel's serverless payload limit (max 4.5MB). Please upload a smaller document (or compressed image/PDF), or use the 'Paste Text' tab.";
+          } else if (res.status === 504) {
+            errorMsg = "Extraction timed out. Please try a smaller document or paste the relevant laboratory section.";
+          } else {
+            errorMsg = rawText ? `Server returned: ${rawText.slice(0, 150)}` : `Server returned error (${res.status})`;
+          }
+        }
+        throw new Error(errorMsg);
       }
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Unable to parse server response. Please verify document formatting or try pasting text.");
+      }
       const extracted = data.results || [];
       setLabResults(extracted);
 
@@ -118,11 +136,23 @@ export default function MedLensDashboard() {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to generate summary.");
+        let errorMsg = "Failed to generate summary.";
+        try {
+          const errData = await res.json();
+          errorMsg = errData.error || errorMsg;
+        } catch {
+          const rawText = await res.text().catch(() => "");
+          errorMsg = rawText || `Server returned error (${res.status})`;
+        }
+        throw new Error(errorMsg);
       }
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Unable to parse summary response.");
+      }
       setSummary(data.summary);
     } catch (err: any) {
       console.error("[Dashboard] Summary error:", err);

@@ -34,7 +34,7 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({
     }
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -42,27 +42,89 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      handleFileSelected(file);
+      await handleFileSelected(file);
     }
+  };
+
+  const compressImageIfNeeded = async (file: File): Promise<File> => {
+    if (!file.type.startsWith("image/")) return file;
+    // Compress any image over 1.5MB to ensure it never exceeds Vercel's 4.5MB payload limit
+    if (file.size < 1.5 * 1024 * 1024) return file;
+
+    return new Promise<File>((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_DIM = 2000;
+        let width = img.width;
+        let height = img.height;
+        if (width > height && width > MAX_DIM) {
+          height = Math.round((height * MAX_DIM) / width);
+          width = MAX_DIM;
+        } else if (height > MAX_DIM) {
+          width = Math.round((width * MAX_DIM) / height);
+          height = MAX_DIM;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          0.85
+        );
+      };
+      img.onerror = () => resolve(file);
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setErrorMessage(null);
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      handleFileSelected(file);
+      await handleFileSelected(file);
     }
   };
 
-  const handleFileSelected = (file: File) => {
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage("File exceeds 5MB maximum allowable size.");
+  const handleFileSelected = async (rawFile: File) => {
+    const allowed = ["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"];
+    if (rawFile.type && !allowed.includes(rawFile.type)) {
+      setErrorMessage(`Unsupported format (${rawFile.type}). Please upload PDF, PNG, JPEG, or TXT.`);
       return;
     }
 
-    const allowed = ["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"];
-    if (file.type && !allowed.includes(file.type)) {
-      setErrorMessage(`Unsupported format (${file.type}). Please upload PDF, PNG, JPEG, or TXT.`);
+    let file = rawFile;
+    if (rawFile.type.startsWith("image/")) {
+      try {
+        file = await compressImageIfNeeded(rawFile);
+      } catch {
+        file = rawFile;
+      }
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      setErrorMessage("File exceeds 4MB maximum allowable cloud size. Please upload a smaller file or use 'Paste Text'.");
       return;
     }
 
