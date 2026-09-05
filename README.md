@@ -139,6 +139,32 @@ npm test
 
 ---
 
+## 🌐 Production Deployment Guide
+
+### Option 1: Vercel (Fastest — 60 Seconds)
+1. Go to [vercel.com](https://vercel.com) and log in with GitHub.
+2. Click **Add New Project** $\to$ **Import** repository `sriramojusrimansai2007-ux/Medlens`.
+3. In **Environment Variables**, add:
+   - Key: `GEMINI_API_KEY`
+   - Value: `your_gemini_api_key_here`
+4. Click **Deploy**. Vercel will build and assign your live production URL (with free SSL and edge CDN).
+
+### Option 2: Google Cloud Run / Docker
+1. Build container image:
+   ```bash
+   docker build -t medlens .
+   ```
+2. Run container:
+   ```bash
+   docker run -p 3000:3000 -e GEMINI_API_KEY=your_key_here medlens
+   ```
+3. Or deploy directly via Google Cloud SDK:
+   ```bash
+   gcloud run deploy medlens --source . --set-env-vars GEMINI_API_KEY=your_key_here --allow-unauthenticated
+   ```
+
+---
+
 ## 📄 License
 MIT License. Created for the AI Hackathon 2026.
 
