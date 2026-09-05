@@ -96,3 +96,4 @@ export function getFilteredSuggestions(
     )
     .slice(0, limit);
 }
+

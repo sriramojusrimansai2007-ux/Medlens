@@ -37,3 +37,4 @@ describe("Clinical Dictionary & Autocomplete Engine", () => {
     expect(results.length).toBeLessThanOrEqual(3);
   });
 });
+
